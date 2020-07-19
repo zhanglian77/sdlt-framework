@@ -23,6 +23,8 @@ use SilverStripe\Forms\GridField\GridFieldAddNewButton;
 use SilverStripe\Forms\GridField\GridFieldEditButton;
 use SilverStripe\Forms\GridField\GridFieldViewButton;
 use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
+use SilverStripe\Forms\TabSet;
+use SilverStripe\Forms\Tab;
 
 /**
  * Class TaskSubmissionAdmin
@@ -60,16 +62,46 @@ class TaskSubmissionAdmin extends ModelAdmin
         $gridFieldName = $this->sanitiseClassName($this->modelClass);
 
         /* @var GridField $gridField */
-        $gridField = $form->Fields()->fieldByName($gridFieldName);
-        $list = $gridField->getList();
-        $gridField->setList($list->exclude('Status', 'expired'));
+        $currentGridField = $form->Fields()->fieldByName($gridFieldName);
+        $list = $currentGridField->getList();
+        $currentList = $list->exclude('Status', 'expired');
+        $currentGridField->setList($currentList);
         $config = GridFieldConfig_RelationEditor::create();
         $config->removeComponentsByType(GridFieldAddNewButton::class);
 
         //$config->removeComponentsByType(GridFieldEditButton::class);
         $config->removeComponentsByType(GridFieldAddExistingAutocompleter::class);
         $config->AddComponents(new GridFieldViewButton());
-        $gridField->setConfig($config);
+        $currentGridField->setConfig($config);
+
+        $expiredSubmission = $list->filter('Status', TaskSubmission::STATUS_EXPIRED);
+
+        $expiredGridField = new GridField(
+            'ExpiredSubmissions',
+            ' ',
+            $expiredSubmission,
+            $config
+        );
+
+        $fields = new FieldList(
+            $root = new TabSet(
+                'Root',
+                new Tab(
+                    'CurrentSubmissions',
+                    'Current' . '(' . count($currentList) . ')',
+                    $currentGridField
+                ),
+                new Tab(
+                    'ExpiredSubmissions',
+                    'Expired' . '(' . count($expiredSubmission) . ')',
+                    $expiredGridField
+                    )
+                )
+            );
+
+        $actions = new FieldList();
+        $form->setFields($fields);
+        $form->setActions($actions);
 
         return $form;
     }

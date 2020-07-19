@@ -25,6 +25,8 @@ use SilverStripe\Forms\GridField\GridFieldViewButton;
 use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
 use SilverStripe\Forms\GridField\GridFieldDetailForm;
 use SilverStripe\Forms\GridField\GridFieldDeleteAction;
+use SilverStripe\Forms\TabSet;
+use SilverStripe\Forms\Tab;
 
 /**
  * Class QuestionnaireSubmissionAdmin
@@ -62,11 +64,13 @@ class QuestionnaireSubmissionAdmin extends ModelAdmin
         $gridFieldName = $this->sanitiseClassName($this->modelClass);
 
         /* @var GridField $gridField */
-        $gridField = $form->Fields()->fieldByName($gridFieldName);
+        $currentGridField = $form->Fields()->fieldByName($gridFieldName);
 
-        $list = $gridField->getList();
+        $list = $currentGridField->getList();
 
-        $gridField->setList($list->exclude('QuestionnaireStatus', 'expired'));
+        $currentList = $list->exclude('QuestionnaireStatus', 'expired');
+
+        $currentGridField->setList($currentList);
 
         $config = GridFieldConfig_RelationEditor::create();
 
@@ -76,7 +80,39 @@ class QuestionnaireSubmissionAdmin extends ModelAdmin
         $config->getComponentByType(GridFieldDetailForm::class)
             ->setItemRequestClass(QuestionnaireSubmissionDetailForm_ItemRequest::class);
 
-        $gridField->setConfig($config);
+        $currentGridField->setConfig($config);
+
+        $expiredSubmission = $list->filter(
+            'QuestionnaireStatus',
+            QuestionnaireSubmission::STATUS_EXPIRED
+        );
+
+        $expiredGridField = new GridField(
+            'ExpiredSubmissions',
+            '',
+            $expiredSubmission,
+            $config
+        );
+
+        $fields = new FieldList(
+            $root = new TabSet(
+                'Root',
+                new Tab(
+                    'CurrentSubmissions',
+                    'Current' . '(' . count($currentList->exclude('QuestionnaireStatus', 'expired')) . ')',
+                    $currentGridField
+                ),
+                new Tab(
+                    'ExpiredSubmissions',
+                    'Expired' . '(' . count($expiredSubmission) . ')',
+                    $expiredGridField
+                )
+            )
+        );
+
+        $actions = new FieldList();
+        $form->setFields($fields);
+        $form->setActions($actions);
 
         return $form;
     }
