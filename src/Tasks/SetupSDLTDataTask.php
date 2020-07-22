@@ -66,26 +66,26 @@ class SetupSDLTDataTask extends BuildTask
      * @var array
      */
     private static $paths = [
-        'Dashboard' => 'app/populate/csv/Dashboard.csv',
-        'Pillar' => 'app/populate/csv/Pillar.csv',
-        'Questionnaire' => 'app/populate/csv/Questionnaire.csv',
-        'Task' => 'app/populate/csv/Task.csv',
-        'Question' => 'app/populate/csv/Question.csv',
-        'AnswerInputField' => 'app/populate/csv/AnswerInputField.csv',
-        'AnswerActionField' => 'app/populate/csv/AnswerActionField.csv',
-        'Risk' => 'app/populate/csv/Risk.csv',
-        'ImpactThreshold' => 'app/populate/csv/ImpactThreshold.csv',
-        'LikelihoodThreshold' => 'app/populate/csv/LikelihoodThreshold.csv',
-        'RiskRating' => 'app/populate/csv/RiskRating.csv',
-        'SecurityComponent' => 'app/populate/csv/SecurityComponent.csv',
-        'SecurityControl' => 'app/populate/csv/SecurityControl.csv',
+        'Dashboard' => 'populate/csv/Dashboard.csv',
+        'Pillar' => 'populate/csv/Pillar.csv',
+        'Questionnaire' => 'populate/csv/Questionnaire.csv',
+        'Task' => 'populate/csv/Task.csv',
+        'Question' => 'populate/csv/Question.csv',
+        'AnswerInputField' => 'populate/csv/AnswerInputField.csv',
+        'AnswerActionField' => 'populate/csv/AnswerActionField.csv',
+        'Risk' => 'populate/csv/Risk.csv',
+        'ImpactThreshold' => 'populate/csv/ImpactThreshold.csv',
+        'LikelihoodThreshold' => 'populate/csv/LikelihoodThreshold.csv',
+        'RiskRating' => 'populate/csv/RiskRating.csv',
+        'SecurityComponent' => 'populate/csv/SecurityComponent.csv',
+        'SecurityControl' => 'populate/csv/SecurityControl.csv',
 
         //must import after AnswerInputField and Risk
-        'AnswerInputBlock' => 'app/populate/csv/AnswerInputBlock.csv',
+        'AnswerInputBlock' => 'populate/csv/AnswerInputBlock.csv',
 
         //ControlWeightSet can't exist until Risk, SecurityControl,
         //and SecurityComponent are loaded
-        'ControlWeightSet' => 'app/populate/csv/ControlWeightSet.csv',
+        'ControlWeightSet' => 'populate/csv/ControlWeightSet.csv',
     ];
 
     /**
@@ -95,25 +95,25 @@ class SetupSDLTDataTask extends BuildTask
      */
     private static $relation_paths = [
         'SecurityComponent_SecurityControls' => [
-            'path' => 'app/populate/csv/SecurityComponent_SecurityControl.csv',
+            'path' => 'populate/csv/SecurityComponent_SecurityControl.csv',
         ],
         'AnswerActionField_Tasks' => [
-            'path' => 'app/populate/csv/AnswerActionField_Tasks.csv',
+            'path' => 'populate/csv/AnswerActionField_Tasks.csv',
         ],
         'AnswerInputBlock_Risks' => [
-            'path' => 'app/populate/csv/AnswerInputBlock_Risks.csv',
+            'path' => 'populate/csv/AnswerInputBlock_Risks.csv',
         ],
         'AnswerActionField_Risks' => [
-            'path' => 'app/populate/csv/AnswerActionField_Risks.csv',
+            'path' => 'populate/csv/AnswerActionField_Risks.csv',
         ],
         'Dashboard_Tasks' => [
-            'path' => 'app/populate/csv/Dashboard_Tasks.csv',
+            'path' => 'populate/csv/Dashboard_Tasks.csv',
         ],
         'Questionnaire_Tasks' => [
-            'path' => 'app/populate/csv/Questionnaire_Tasks.csv',
+            'path' => 'populate/csv/Questionnaire_Tasks.csv',
         ],
         'Task_DefaultSecurityComponents' => [
-            'path' => 'app/populate/csv/Task_DefaultSecurityComponents.csv',
+            'path' => 'populate/csv/Task_DefaultSecurityComponents.csv',
         ],
     ];
 
@@ -145,17 +145,17 @@ class SetupSDLTDataTask extends BuildTask
      * @var array
      */
     private $json_questionnaire_paths = [
-        'Questionnaire: Proof of Concept' => 'app/populate/json/questionnaire/questionnaire_poc.json',
-        'Questionnaire: Solution' => 'app/populate/json/questionnaire/questionnaire_solution.json',
-        'Questionnaire: SaaS' => 'app/populate/json/questionnaire/questionnaire_saas.json',
-        'Questionnaire: Feature Release' => 'app/populate/json/questionnaire/questionnaire_feature.json'
+        'Questionnaire: Proof of Concept' => 'populate/json/questionnaire/questionnaire_poc.json',
+        'Questionnaire: Solution' => 'populate/json/questionnaire/questionnaire_solution.json',
+        'Questionnaire: SaaS' => 'populate/json/questionnaire/questionnaire_saas.json',
+        'Questionnaire: Feature Release' => 'populate/json/questionnaire/questionnaire_feature.json'
     ];
 
     /**
      * @var array
      */
     private $json_task_paths = [
-        'Task: Web Security Configuration' => 'app/populate/json/task/task_web_security_configuration.json'
+        'Task: Web Security Configuration' => 'populate/json/task/task_web_security_configuration.json'
     ];
 
     /**
@@ -191,12 +191,20 @@ class SetupSDLTDataTask extends BuildTask
         DB::query("TRUNCATE Task");
         DB::query("TRUNCATE Task_DefaultSecurityComponents");
 
+        $sdltFrameworkPath = BASE_PATH
+            . DIRECTORY_SEPARATOR
+            . 'vendor'
+            . DIRECTORY_SEPARATOR
+            .'nzta'
+            . DIRECTORY_SEPARATOR
+            .'sdlt-framework';
 
         foreach ($this->config()->paths as $model => $csvpath) {
-            if (!file_exists(BASE_PATH . DIRECTORY_SEPARATOR . $csvpath)) {
-                throw new \Exception(BASE_PATH . DIRECTORY_SEPARATOR . $csvpath . ' does not exist');
+
+            if (!file_exists($sdltFrameworkPath . DIRECTORY_SEPARATOR . $csvpath)) {
+                throw new \Exception($sdltFrameworkPath . DIRECTORY_SEPARATOR . $csvpath . ' does not exist');
             }
-            $csv = Reader::createFromPath(BASE_PATH . DIRECTORY_SEPARATOR . $csvpath, 'r');
+            $csv = Reader::createFromPath($sdltFrameworkPath . DIRECTORY_SEPARATOR . $csvpath, 'r');
 
             //get the first row, usually the CSV header
             $headers = $csv->fetchOne();
@@ -244,10 +252,10 @@ class SetupSDLTDataTask extends BuildTask
 
         foreach ($this->config()->relation_paths as $model => $csvArray) {
             $csvpath = $csvArray['path'] ?? null;
-            if ($csvpath && !file_exists(BASE_PATH . DIRECTORY_SEPARATOR . $csvpath)) {
-                throw new \Exception(BASE_PATH . DIRECTORY_SEPARATOR . $csvpath . ' does not exist');
+            if ($csvpath && !file_exists($sdltFrameworkPath . DIRECTORY_SEPARATOR . $csvpath)) {
+                throw new \Exception($sdltFrameworkPath . DIRECTORY_SEPARATOR . $csvpath . ' does not exist');
             }
-            $csv = Reader::createFromPath(BASE_PATH . DIRECTORY_SEPARATOR . $csvpath, 'r');
+            $csv = Reader::createFromPath($sdltFrameworkPath . DIRECTORY_SEPARATOR . $csvpath, 'r');
 
             //get the first row, usually the CSV header
             $headers = $csv->fetchOne();
@@ -290,8 +298,12 @@ class SetupSDLTDataTask extends BuildTask
         foreach ($this->json_questionnaire_paths as $key => $value) {
             printf("Importing JSON Questionnaire '$key' from $value\n");
 
-            $string = file_get_contents($value);
-            $incomingJson = $incomingJson = (json_decode($string));
+            $string = file_get_contents($sdltFrameworkPath
+                . DIRECTORY_SEPARATOR
+                . $value
+            );
+
+            $incomingJson = json_decode($string);
             Questionnaire::create_record_from_json($incomingJson, true);
         }
 
@@ -301,8 +313,11 @@ class SetupSDLTDataTask extends BuildTask
         foreach ($this->json_task_paths as $key => $value) {
             printf("Importing JSON Task '$key' from $value\n");
 
-            $string = file_get_contents($value);
-            $incomingJson = $incomingJson = (json_decode($string));
+            $string = file_get_contents($sdltFrameworkPath
+                . DIRECTORY_SEPARATOR
+                . $value
+            );
+            $incomingJson = json_decode($string);
             Task::create_record_from_json($incomingJson, true);
         }
     }
