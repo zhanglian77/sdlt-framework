@@ -38,8 +38,7 @@
     },
     "extra": {
         "expose": [
-            "app/css",
-            "themes/sdlt/dist"
+            "css"
         ]
     },
     "suggest": {
