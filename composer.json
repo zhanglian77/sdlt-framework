@@ -17,16 +17,6 @@
         "swaggest/json-schema": "^0.12.24",
         "ergebnis/json-printer": "^3.0"
     },
-    "repositories": {
-        "nzta/sdlt-framework": {
-            "type": "vcs",
-            "url": "git@github.com:catalyst/sdlt-framework.git"
-        },
-        "nzta/sdlt-theme": {
-            "type": "vcs",
-            "url": "git@github.com:catalyst/sdlt-theme.git"
-        }
-    },
     "require-dev": {
         "phpunit/phpunit": "^5.7",
         "phpro/grumphp": "^v0.14.2",
