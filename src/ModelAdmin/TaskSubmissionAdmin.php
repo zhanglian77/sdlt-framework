@@ -99,7 +99,16 @@ class TaskSubmissionAdmin extends ModelAdmin
                 )
             );
 
-        $form->setFields($fields);
+        $actions = new FieldList();
+
+        $form = new Form(
+            $this,
+            'EditForm',
+            $fields,
+            $actions
+        );
+
+        $this->extend('updateEditForm', $form);
 
         return $form;
     }
