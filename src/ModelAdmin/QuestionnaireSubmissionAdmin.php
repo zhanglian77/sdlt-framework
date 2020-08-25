@@ -6,8 +6,8 @@
  * @category SilverStripe_Project
  * @package SDLT
  * @author  Catalyst I.T. SilverStripe Team 2018 <silverstripedev@catalyst.net.nz>
- * @copyright NZ Transport Agency
- * @license BSD-3
+ * @copyright 2018 Catalyst.Net Ltd
+ * @license https://www.catalyst.net.nz (Commercial)
  * @link https://www.catalyst.net.nz
  */
 
@@ -110,9 +110,7 @@ class QuestionnaireSubmissionAdmin extends ModelAdmin
             )
         );
 
-        $actions = new FieldList();
         $form->setFields($fields);
-        $form->setActions($actions);
 
         return $form;
     }
