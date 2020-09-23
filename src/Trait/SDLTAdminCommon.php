@@ -33,21 +33,21 @@ trait SDLTAdminCommon
      *
      * @var string
      */
-    private static $json_schema_task = '/app/src/ImportJsonSchema/Schema/TaskSchema.json';
+    private static $json_schema_task = '/src/ImportJsonSchema/Schema/TaskSchema.json';
 
      /**
      * Default location of questionnaire schema, allow dev to override for alternative schema
      *
      * @var string
      */
-    private static $json_schema_questionnaire = '/app/src/ImportJsonSchema/Schema/QuestionnaireSchema.json';
+    private static $json_schema_questionnaire = '/src/ImportJsonSchema/Schema/QuestionnaireSchema.json';
 
     /**
     * Default location of security component schema, allow dev to override for alternative schema
     *
     * @var string
     */
-    private static $json_schema_security_component = '/app/src/ImportJsonSchema/Schema/SecurityComponentSchema.json';
+    private static $json_schema_security_component = '/src/ImportJsonSchema/Schema/SecurityComponentSchema.json';
 
     /**
      * @var array
@@ -213,18 +213,25 @@ trait SDLTAdminCommon
     public function getSchemaJson()
     {
         $schemaJson = '';
+        $sdltFrameworkPath = BASE_PATH
+            . DIRECTORY_SEPARATOR
+            . 'vendor'
+            . DIRECTORY_SEPARATOR
+            .'nzta'
+            . DIRECTORY_SEPARATOR
+            .'sdlt-framework';
 
         switch ($this->ImportClass) {
             case 'Questionnaire':
-                $pathToSchema = BASE_PATH . $this->config()->json_schema_questionnaire;
+                $pathToSchema = $sdltFrameworkPath . $this->config()->json_schema_questionnaire;
                 $schemaJson = file_get_contents($pathToSchema);
                 break;
             case 'Task':
-                $pathToSchema = BASE_PATH . $this->config()->json_schema_task;
+                $pathToSchema = $sdltFrameworkPath . $this->config()->json_schema_task;
                 $schemaJson = file_get_contents($pathToSchema);
                 break;
             case 'Security Component':
-                $pathToSchema = BASE_PATH . $this->config()->json_schema_security_component;
+                $pathToSchema = $sdltFrameworkPath . $this->config()->json_schema_security_component;
                 $schemaJson = file_get_contents($pathToSchema);
                 break;
         }
