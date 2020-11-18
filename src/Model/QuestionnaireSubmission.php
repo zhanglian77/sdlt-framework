@@ -22,6 +22,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Group;
@@ -30,6 +31,7 @@ use Symbiote\QueuedJobs\Services\QueuedJobService;
 use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 use NZTA\SDLT\Job\SendStartLinkEmailJob;
 use NZTA\SDLT\Job\SendSummaryPageLinkEmailJob;
+use NZTA\SDLT\Job\SendQuestionnaireSubmittedEmailJob;
 use NZTA\SDLT\Job\SendApprovalLinkEmailJob;
 use NZTA\SDLT\Job\SendDeniedNotificationEmailJob;
 use NZTA\SDLT\Job\SendApprovedNotificationEmailJob;
@@ -95,6 +97,7 @@ class QuestionnaireSubmission extends DataObject implements ScaffoldingProvider
         'IsStartLinkEmailSent' => 'Boolean',
         'IsEmailSentToSecurityArchitect' => 'Boolean',
         'IsSubmitLinkEmailSent' => 'Boolean',
+        'IsQuestionnaireSubmittedEmailSent' => 'Boolean',
         'CisoApprovalStatus' => 'Enum(array("not_applicable", "pending", "approved", "denied", "not_required"))',
         'CisoApproverIPAddress' => 'Varchar(255)',
         'CisoApproverMachineName' => 'Varchar(255)',
@@ -983,6 +986,7 @@ class QuestionnaireSubmission extends DataObject implements ScaffoldingProvider
                     // set email and approval override flag
                     $model->IsStartLinkEmailSent = 0;
                     $model->IsEmailSentToSecurityArchitect = 0;
+                    $model->IsQuestionnaireSubmittedEmailSent = 0;
                     $model->ApprovalOverrideBySecurityArchitect = $model->isApprovalOverriddenBy();
 
                     // set questioonaire level task ids
@@ -1215,6 +1219,18 @@ class QuestionnaireSubmission extends DataObject implements ScaffoldingProvider
                             new SendSummaryPageLinkEmailJob($questionnaireSubmission),
                             date('Y-m-d H:i:s', time() + 30)
                         );
+                    }
+
+                    if ($questionnaireSubmission->Questionnaire()->SendEmailsToApprovalGroup == 'Yes') {
+                        if (!$questionnaireSubmission->IsQuestionnaireSubmittedEmailSent) {
+                            $members = $questionnaireSubmission->getApprovalGroupMembersList();
+                            $questionnaireSubmission->IsQuestionnaireSubmittedEmailSent = 1;
+
+                            $queuedJobService->queueJob(
+                                new SendQuestionnaireSubmittedEmailJob($questionnaireSubmission, $members),
+                                date('Y-m-d H:i:s', time() + 30)
+                            );
+                        }
                     }
 
                     // calculte risk based on answer
@@ -2152,6 +2168,37 @@ class QuestionnaireSubmission extends DataObject implements ScaffoldingProvider
 
         if (!$members) {
             throw new Exception('Please add member for the CISO and Security Architect group.');
+        }
+
+        return $members;
+    }
+
+    /**
+     * @throws Exception
+     * @return ManyManyList
+     */
+    public function getApprovalGroupMembersList()
+    {
+        $approvalGroups = $this->Questionnaire()->ApprovalGroups;
+        $approvalString = str_replace(array('[', ']', '"'), '', $approvalGroups);
+        $domain = strstr($approvalString, ',');
+        $group = new Group;
+        $members = $group->Members();
+        if ($domain) {
+            $approvalArray = explode(",", $approvalString);
+            foreach ($approvalArray as $group) {
+                $groupMembers = $this->getApprovalMembersListByGroup($group);
+                foreach ($groupMembers as $member) {
+                    $members->add($member);
+                }
+            }
+        }
+        else {
+            $members = $this->getApprovalMembersListByGroup($approvalString);
+        }
+
+        if (!$members) {
+            throw new Exception('Please add member in approval group.');
         }
 
         return $members;

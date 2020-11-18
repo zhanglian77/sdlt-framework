@@ -53,6 +53,8 @@ class QuestionnaireEmail extends DataObject
         'ApprovedNotificationEmailBody' => 'HTMLText',
         'DeniedNotificationEmailSubject' => 'Text',
         'DeniedNotificationEmailBody' => 'HTMLText',
+        'QuestionnaireSubmittedEmailSubject' => 'Text',
+        'QuestionnaireSubmittedEmailBody' => 'HTMLText',
         'EmailSignature' => 'HTMLText',
     ];
 
@@ -119,6 +121,30 @@ class QuestionnaireEmail extends DataObject
                     'Please use variable {$questionnaireName} for questionnaire name, {$productName} for product name  and
                         {$summaryLink} for summary link in the email body and subject.
                         {$summaryLink} will be replaced by "this link" label.'
+                )
+            ]
+        );
+
+        $fields->addFieldsToTab(
+            'Root.QuestionnaireSubmittedEmail',
+            [
+                TextField::create(
+                    'QuestionnaireSubmittedEmailSubject',
+                    'Questionnaire Submitted Notification Email Subject'
+                ),
+                HtmlEditorField::create(
+                    'QuestionnaireSubmittedEmailBody',
+                    'Questionnaire Submitted Notification Email Body'
+                ),
+                LiteralField::create(
+                    'QuestionnaireSubmittedEmailText',
+                    '<p class="message notice">You can use the following variable substitutions:<br/><br/>' .
+                    '<b>{$questionnaireName}</b> For questionnaire name<br/>' .
+                    '<b>{$productName}</b> For product name<br/>' .
+                    '<b>{$approvalLink}</b> For approval link<br/>' .
+                    '<b>{$submitterName}</b> For submitter name<br/>' .
+                    '<b>{$submitterEmail}</b> For submitter email in the email body and subject<br/>' .
+                    '<b>{$approvalLink}</b> Will be replaced by "this link" label.</p>'
                 )
             ]
         );

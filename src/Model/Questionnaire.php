@@ -31,6 +31,7 @@ use NZTA\SDLT\Helper\Utils;
 use NZTA\SDLT\Traits\SDLTRiskCalc;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\OptionsetField;
+use SilverStripe\Forms\ListboxField;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Member;
 
@@ -89,6 +90,8 @@ class Questionnaire extends DataObject implements ScaffoldingProvider, Permissio
         'ApprovalIsNotRequired' => 'Boolean',
         'DoesSubmissionExpire' => "Enum('No,Yes', 'Yes')",
         'ExpireAfterDays' => 'Int',
+        'SendEmailsToApprovalGroup' => "Enum('No,Yes', 'Yes')",
+        'ApprovalGroups' => 'Varchar(255)',
         'HideRiskWeightsAndScore' => 'Boolean'
     ];
 
@@ -98,6 +101,8 @@ class Questionnaire extends DataObject implements ScaffoldingProvider, Permissio
     private static $defaults = [
         'ExpireAfterDays' => 14,
         'DoesSubmissionExpire' => 'Yes',
+        'SendEmailsToApprovalGroup' => 'Yes',
+        'ApprovalGroups' => '["sdlt-security-architect"]',
     ];
 
     /**
@@ -254,6 +259,24 @@ class Questionnaire extends DataObject implements ScaffoldingProvider, Permissio
                         .' days.'
                     )
                     ->displayIf('DoesSubmissionExpire')
+                    ->isEqualTo('Yes')
+                    ->end(),
+
+                OptionsetField::create(
+                    'SendEmailsToApprovalGroup',
+                    'Send Submission Emails to Approval Groups?',
+                    $this->dbObject('SendEmailsToApprovalGroup')->enumValues()
+                )->setHasEmptyDefault(false)
+                ->setDescription('If this is not set, submission emails will not be sent to approval groups.
+                <a href="admin/questionnaire-admin/NZTA-SDLT-Model-QuestionnaireEmail/EditForm/field/NZTA-SDLT-Model-QuestionnaireEmail/item/1/">
+                    Email Format Link
+                </a>'
+            ),
+
+                ListboxField::create('ApprovalGroups', 'Select Approval Groups')
+                    ->setSource($this->getGroupsMap())
+                    ->setValue('sdlt-security-architect')
+                    ->displayIf('SendEmailsToApprovalGroup')
                     ->isEqualTo('Yes')
                     ->end()
             ],
@@ -417,6 +440,20 @@ class Questionnaire extends DataObject implements ScaffoldingProvider, Permissio
     }
 
     /**
+     * @return Array
+     */
+    public function getGroupsMap()
+    {
+        $groups = Group::get();
+        $groupsMap = array();
+        foreach ($groups as $group) {
+            $groupsMap[$group->Code] = $group->getBreadcrumbs(' > ');
+        }
+        asort($groupsMap);
+        return $groupsMap;
+    }
+
+    /**
      * Deal with pre-write processes.
      *
      * @return void
@@ -539,6 +576,10 @@ class Questionnaire extends DataObject implements ScaffoldingProvider, Permissio
                     . ' days.'
                 );
             }
+        }
+        // validation for SendEmailsToApprovalGroup
+        if ($this->SendEmailsToApprovalGroup == 'Yes' && !$this->ApprovalGroups) {
+            $result->addError('Please select approval groups.');
         }
 
         return $result;
